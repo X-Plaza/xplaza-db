@@ -382,3 +382,39 @@ ALTER TABLE "menu_module_link" ADD FOREIGN KEY ("module_id") REFERENCES "modules
 ALTER TABLE "user_role_links" ADD FOREIGN KEY ("admin_user_id") REFERENCES "admin_users" ("admin_user_id");
 
 ALTER TABLE "user_role_links" ADD FOREIGN KEY ("role_id") REFERENCES "roles" ("role_id");
+
+DROP TABLE user_role_links ;
+
+ALTER TABLE roles DROP CONSTRAINT roles_fk_permission_id_fkey;
+
+DROP TABLE permissions  ;
+
+ALTER TABLE roles RENAME COLUMN fk_permission_id TO fk_module_id;
+
+ALTER TABLE "roles" ADD FOREIGN KEY ("fk_module_id") REFERENCES "modules" ("module_id");
+
+ALTER TABLE admin_users ADD fk_role_id int NOT NULL DEFAULT 1;
+
+
+INSERT INTO modules
+(module_name, module_description)
+VALUES('Master Admin Module', 'This module contains all the things a master admin can do');
+
+INSERT INTO modules
+(module_name, module_description)
+VALUES('Shop Admin Module', 'This module contains all the things a shop admin can do');
+
+
+INSERT INTO roles
+(role_name, role_description, fk_module_id)
+VALUES('Master Admin', 'Master Admin', 1);
+
+ALTER TABLE "admin_users" ADD FOREIGN KEY ("fk_role_id") REFERENCES "roles" ("role_id");
+
+INSERT INTO roles
+(role_name, role_description, fk_module_id)
+VALUES('Shop Admin', 'Shop Owner', 2);
+
+ALTER TABLE admin_users ADD fk_shop_id int;
+
+ALTER TABLE "admin_users" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("shop_id");

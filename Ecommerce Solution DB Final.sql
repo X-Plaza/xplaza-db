@@ -418,3 +418,7 @@ VALUES('Shop Admin', 'Shop Owner', 2);
 ALTER TABLE admin_users ADD fk_shop_id int;
 
 ALTER TABLE "admin_users" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("shop_id");
+
+ALTER TABLE products ADD fk_shop_id int NOT NULL;
+
+ALTER TABLE "products" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("shop_id");

@@ -182,9 +182,14 @@ CREATE TABLE "shops" (
 CREATE TABLE "locations" (
   "location_id" BIGSERIAL PRIMARY KEY,
   "location_name" varchar,
-  "fk_country_id" int
+  "fk_city_id" int
 );
 
+CREATE TABLE "cities" (
+  "city_id" BIGSERIAL PRIMARY KEY,
+  "city_name" varchar,
+  "fk_country_id" int
+);
 
 CREATE SEQUENCE countries_country_id_seq;
 
@@ -363,7 +368,7 @@ ALTER TABLE "product_images" ADD FOREIGN KEY ("fk_product_id") REFERENCES "produ
 
 ALTER TABLE "shops" ADD FOREIGN KEY ("fk_location_id") REFERENCES "locations" ("location_id");
 
-ALTER TABLE "locations" ADD FOREIGN KEY ("fk_country_id") REFERENCES "countries" ("country_id");
+ALTER TABLE "locations" ADD FOREIGN KEY ("fk_city_id") REFERENCES "cities" ("city_id");
 
 ALTER TABLE "delivery_schedules" ADD FOREIGN KEY ("fk_day_type_id") REFERENCES "day_types" ("day_type_id");
 
@@ -395,7 +400,6 @@ ALTER TABLE "roles" ADD FOREIGN KEY ("fk_module_id") REFERENCES "modules" ("modu
 
 ALTER TABLE admin_users ADD fk_role_id int NOT NULL DEFAULT 1;
 
-
 INSERT INTO modules
 (module_name, module_description)
 VALUES('Master Admin Module', 'This module contains all the things a master admin can do');
@@ -403,7 +407,6 @@ VALUES('Master Admin Module', 'This module contains all the things a master admi
 INSERT INTO modules
 (module_name, module_description)
 VALUES('Shop Admin Module', 'This module contains all the things a shop admin can do');
-
 
 INSERT INTO roles
 (role_name, role_description, fk_module_id)
@@ -422,3 +425,5 @@ ALTER TABLE "admin_users" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("sh
 ALTER TABLE products ADD fk_shop_id int NOT NULL;
 
 ALTER TABLE "products" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("shop_id");
+
+ALTER TABLE "cities" ADD FOREIGN KEY ("fk_country_id") REFERENCES "countries" ("country_id");

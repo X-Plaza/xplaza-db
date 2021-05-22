@@ -188,6 +188,12 @@ CREATE TABLE "locations" (
 CREATE TABLE "cities" (
   "city_id" BIGSERIAL PRIMARY KEY,
   "city_name" varchar,
+  "fk_state_id" int
+);
+
+CREATE TABLE "states" (
+  "state_id" BIGSERIAL PRIMARY KEY,
+  "state_name" varchar,
   "fk_country_id" int
 );
 
@@ -426,4 +432,6 @@ ALTER TABLE products ADD fk_shop_id int NOT NULL;
 
 ALTER TABLE "products" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("shop_id");
 
-ALTER TABLE "cities" ADD FOREIGN KEY ("fk_country_id") REFERENCES "countries" ("country_id");
+ALTER TABLE "cities" ADD FOREIGN KEY ("fk_state_id") REFERENCES "states" ("state_id");
+
+ALTER TABLE "states" ADD FOREIGN KEY ("fk_country_id") REFERENCES "countries" ("country_id");

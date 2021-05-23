@@ -435,3 +435,5 @@ ALTER TABLE "products" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("shop_
 ALTER TABLE "cities" ADD FOREIGN KEY ("fk_state_id") REFERENCES "states" ("state_id");
 
 ALTER TABLE "states" ADD FOREIGN KEY ("fk_country_id") REFERENCES "countries" ("country_id");
+
+ALTER TABLE products ADD quantity int NOT NULL DEFAULT 1;

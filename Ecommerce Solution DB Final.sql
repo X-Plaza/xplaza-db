@@ -437,3 +437,26 @@ ALTER TABLE "cities" ADD FOREIGN KEY ("fk_state_id") REFERENCES "states" ("state
 ALTER TABLE "states" ADD FOREIGN KEY ("fk_country_id") REFERENCES "countries" ("country_id");
 
 ALTER TABLE products ADD quantity int NOT NULL DEFAULT 1;
+
+ALTER TABLE menu_module_link ADD "full" bool NOT NULL DEFAULT false;
+
+ALTER TABLE menu_module_link ADD "view" bool DEFAULT false;
+
+ALTER TABLE menu_module_link ADD "add" bool DEFAULT false;
+
+ALTER TABLE menu_module_link ADD "update" bool DEFAULT false;
+
+ALTER TABLE menu_module_link ADD "delete" bool DEFAULT false;
+
+CREATE OR REPLACE VIEW login AS
+select a.admin_user_id, a.user_name, r.role_id, r.role_name, s.shop_id, s.shop_name, false as authentication 
+from admin_users a
+left join roles r on a.fk_role_id = r.role_id
+left join shops s on a.fk_shop_id = s.shop_id
+
+CREATE OR REPLACE VIEW permissions AS
+select row_number() OVER() AS id, au.admin_user_id, m2.menu_name, mml.full, mml.view, mml.add, mml.update, mml.delete 
+from admin_users au left join roles r on au.fk_role_id = r.role_id 
+left join modules m on r.fk_module_id = m.module_id 
+left join menu_module_link mml on m.module_id = mml.module_id 
+left join menus m2 on mml.menu_id = m2.menu_id;

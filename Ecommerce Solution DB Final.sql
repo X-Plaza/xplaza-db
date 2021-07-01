@@ -449,10 +449,9 @@ ALTER TABLE menu_module_link ADD "update" bool DEFAULT false;
 ALTER TABLE menu_module_link ADD "delete" bool DEFAULT false;
 
 CREATE OR REPLACE VIEW login AS
-select a.admin_user_id, a.user_name, r.role_id, r.role_name, s.shop_id, s.shop_name, false as authentication 
+select a.admin_user_id, a.user_name, r.role_id, r.role_name, false as authentication 
 from admin_users a
-left join roles r on a.fk_role_id = r.role_id
-left join shops s on a.fk_shop_id = s.shop_id
+left join roles r on a.fk_role_id = r.role_id;
 
 CREATE OR REPLACE VIEW permissions AS
 select row_number() OVER() AS id, au.admin_user_id, m2.menu_name, mml.full, mml.view, mml.add, mml.update, mml.delete 
@@ -461,16 +460,45 @@ left join modules m on r.fk_module_id = m.module_id
 left join menu_module_link mml on m.module_id = mml.module_id 
 left join menus m2 on mml.menu_id = m2.menu_id;
 
-
 ALTER TABLE coupons ADD coupon_code varchar NOT NULL;
 
 ALTER TABLE orders ADD received_time timestamp(0) NULL;
 
 ALTER TABLE order_items ADD order_item_unit_price float8 NULL;
+
 ALTER TABLE order_items ADD order_item_category varchar NULL;
+
 ALTER TABLE order_items ADD order_item_quantity_type varchar NULL;
+
 ALTER TABLE order_items ADD order_item_image varchar NULL;
+
 ALTER TABLE order_items RENAME COLUMN order_item_price TO order_item_total_price;
+
+ALTER TABLE coupons ADD max_coupon_amount float8 NULL;
+
+ALTER TABLE coupons ADD fk_discount_type_id int4 NULL;
+
+ALTER TABLE "coupons" ADD FOREIGN KEY ("fk_discount_type_id") REFERENCES "discount_types" ("discount_type_id");
+
+CREATE TABLE "admin_user_shop_link" (
+  "admin_user_id" BIGSERIAL,
+  "shop_id" BIGSERIAL,
+  PRIMARY KEY ("admin_user_id", "shop_id")
+);
+
+ALTER TABLE "admin_user_shop_link" ADD FOREIGN KEY ("admin_user_id") REFERENCES "admin_users" ("admin_user_id");
+
+ALTER TABLE "admin_user_shop_link" ADD FOREIGN KEY ("shop_id") REFERENCES "shops" ("shop_id");
+
+ALTER TABLE admin_users DROP COLUMN fk_shop_id;
+
+CREATE OR REPLACE VIEW Admin_User_Shop_List AS
+select row_number() OVER() AS id, ausl.*, s.shop_name 
+from admin_user_shop_link ausl left join shops s on s.shop_id = ausl.shop_id;
+
+
+
+
 
 
 ##Order Details:
@@ -493,7 +521,6 @@ left join payment_types pt on o.fk_payment_type_id = pt.payment_type_id
 left join deliveries d on o.fk_delivery_id = d.delivery_id 
 left join coupons cou on cou.coupon_id = o.fk_coupon_id 
 where o.order_id = 1
-
 
 ##Order List:
 select o.order_id, o.total_price, o.discount_amount, o.grand_total_price, o.delivery_address, concat(c.first_name,' ',c.last_name) as customer_name, 

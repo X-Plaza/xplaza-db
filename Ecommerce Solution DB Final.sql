@@ -496,10 +496,7 @@ CREATE OR REPLACE VIEW Admin_User_Shop_List AS
 select row_number() OVER() AS id, ausl.*, s.shop_name 
 from admin_user_shop_link ausl left join shops s on s.shop_id = ausl.shop_id;
 
-
-
-
-
+ALTER TABLE coupons ALTER COLUMN is_active SET DEFAULT false;
 
 ##Order Details:
 select o.order_id, o.total_price, o.discount_amount, o.grand_total_price, o.delivery_address, concat(c.first_name ,' ',c.last_name) as customer_name,

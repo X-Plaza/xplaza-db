@@ -496,6 +496,24 @@ CREATE OR REPLACE VIEW Admin_User_Shop_List AS
 select row_number() OVER() AS id, ausl.*, s.shop_name 
 from admin_user_shop_link ausl left join shops s on s.shop_id = ausl.shop_id;
 
+ALTER TABLE coupons ADD is_active bool NOT NULL DEFAULT true;
+
+ALTER TABLE delivery_schedules ALTER COLUMN fk_day_type_id TYPE int4 USING fk_day_type_id::int4;
+ALTER TABLE delivery_schedules ALTER COLUMN delivery_schedule_start TYPE time USING delivery_schedule_start::time;
+ALTER TABLE delivery_schedules ALTER COLUMN delivery_schedule_end TYPE time USING delivery_schedule_end::time;
+ALTER TABLE delivery_schedules RENAME COLUMN fk_day_type_id TO fk_day_id;
+ALTER TABLE day_types RENAME TO day_names;
+ALTER TABLE day_names ALTER COLUMN day_type_name TYPE varchar USING day_type_name::varchar;
+ALTER TABLE day_names RENAME COLUMN day_type_name TO day_name;
+ALTER TABLE day_names RENAME COLUMN day_type_id TO day_id;
+ALTER TABLE delivery_schedules DROP COLUMN delivery_schedule_slab;
+
+ALTER TABLE orders DROP CONSTRAINT orders_fk_delivery_id_fkey;
+ALTER TABLE orders DROP COLUMN fk_delivery_id;
+ALTER TABLE deliveries ALTER COLUMN person_name TYPE varchar USING person_name::varchar;
+ALTER TABLE orders ADD date_to_deliver date NULL;
+ALTER TABLE products RENAME COLUMN product_var_type_option TO product_var_type_value;
+
 ALTER TABLE coupons ALTER COLUMN is_active SET DEFAULT false;
 
 ##Order Details:
@@ -530,20 +548,4 @@ left join delivery_schedules ds on o.fk_delivery_schedule_id = ds.delivery_sched
 left join status_catalogues st on o.fk_status_id = st.status_id;
 
 
-ALTER TABLE coupons ADD is_active bool NOT NULL DEFAULT true;
 
-ALTER TABLE delivery_schedules ALTER COLUMN fk_day_type_id TYPE int4 USING fk_day_type_id::int4;
-ALTER TABLE delivery_schedules ALTER COLUMN delivery_schedule_start TYPE time USING delivery_schedule_start::time;
-ALTER TABLE delivery_schedules ALTER COLUMN delivery_schedule_end TYPE time USING delivery_schedule_end::time;
-ALTER TABLE delivery_schedules RENAME COLUMN fk_day_type_id TO fk_day_id;
-ALTER TABLE day_types RENAME TO day_names;
-ALTER TABLE day_names ALTER COLUMN day_type_name TYPE varchar USING day_type_name::varchar;
-ALTER TABLE day_names RENAME COLUMN day_type_name TO day_name;
-ALTER TABLE day_names RENAME COLUMN day_type_id TO day_id;
-ALTER TABLE delivery_schedules DROP COLUMN delivery_schedule_slab;
-
-ALTER TABLE orders DROP CONSTRAINT orders_fk_delivery_id_fkey;
-ALTER TABLE orders DROP COLUMN fk_delivery_id;
-ALTER TABLE deliveries ALTER COLUMN person_name TYPE varchar USING person_name::varchar;
-ALTER TABLE orders ADD date_to_deliver date NULL;
-ALTER TABLE products RENAME COLUMN product_var_type_option TO product_var_type_value;

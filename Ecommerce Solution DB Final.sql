@@ -542,4 +542,11 @@ AS SELECT row_number() OVER () AS id,
      p.product_id, o.fk_shop_id 
 order by monthly_sold_unit desc
 
+--product to stock view
+
+CREATE OR REPLACE VIEW product_to_stock
+AS SELECT row_number() OVER () AS id,
+    product_id, product_name, quantity as remaining_unit from products
+    where quantity <= 5
+    order by remaining_unit
 

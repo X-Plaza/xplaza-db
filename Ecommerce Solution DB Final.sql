@@ -520,60 +520,6 @@ ALTER TABLE coupons DROP COLUMN is_active;
 
 ALTER TABLE coupons ADD "is_active" bool DEFAULT false;
 
--- DROP TABLE coupons;
-
--- CREATE TABLE "coupons" (
---   "coupon_id" BIGSERIAL PRIMARY KEY,
---   "coupon_code" varchar,
---   "coupon_amount" float,
---   "max_coupon_amount" float,
---   "coupon_start_date" timestamp,
---   "coupon_end_date" timestamp,
---   "fk_currency_id" int,
---   "fk_discount_type_id" int
--- );
--- ALTER TABLE "coupons" ADD "is_active" bool DEFAULT false;
--- ALTER TABLE "coupons" ADD FOREIGN KEY ("fk_currency_id") REFERENCES "currencies" ("currency_id");
--- ALTER TABLE "coupons" ADD FOREIGN KEY ("fk_discount_type_id") REFERENCES "discount_types" ("discount_type_id");
-
-
-
-
-
-
-
-
-
--- ##Order Details:
--- select o.order_id, o.total_price, o.discount_amount, o.grand_total_price, o.delivery_address, concat(c.first_name ,' ',c.last_name) as customer_name,
--- c.mobile_no, o.received_time, o.fk_shop_id, s.shop_name, o.fk_status_id, st.status_name,
--- concat(ds.delivery_schedule_start,'-',ds.delivery_schedule_end) as allotted_time,
--- o.fk_delivery_cost_id, dc.delivery_cost,
--- o.fk_payment_type_id, pt.payment_type_name, o.fk_delivery_id, d.person_name, d.contact_no,
--- o.fk_coupon_id, cou.coupon_code, cou.coupon_amount,
--- oi.order_item_name, oi.order_item_category, oi.order_item_quantity, oi.order_item_quantity_type, oi.order_item_unit_price,
--- oi.order_item_total_price, oi.order_item_image
--- from orders o
--- left join shops s on o.fk_shop_id = s.shop_id
--- left join customers c on o.fk_customer_id = c.customer_id
--- left join delivery_schedules ds on o.fk_delivery_schedule_id = ds.delivery_schedule_id
--- left join status_catalogues st on o.fk_status_id = st.status_id
--- left join order_items oi on o.order_id = oi.fk_order_id 
--- left join delivery_costs dc on dc.delivery_cost_id = o.fk_delivery_cost_id 
--- left join payment_types pt on o.fk_payment_type_id = pt.payment_type_id 
--- left join deliveries d on o.fk_delivery_id = d.delivery_id 
--- left join coupons cou on cou.coupon_id = o.fk_coupon_id 
--- where o.order_id = 1
-
--- ##Order List:
--- select o.order_id, o.total_price, o.discount_amount, o.grand_total_price, o.delivery_address, concat(c.first_name,' ',c.last_name) as customer_name, 
--- c.mobile_no, o.received_time, o.fk_shop_id, s.shop_name, o.fk_status_id, st.status_name, 
--- concat(ds.delivery_schedule_start, '-' , ds.delivery_schedule_end) as allotted_time 
--- from orders o 
--- left join shops s on o.fk_shop_id = s.shop_id 
--- left join customers c on o.fk_customer_id = c.customer_id 
--- left join delivery_schedules ds on o.fk_delivery_schedule_id = ds.delivery_schedule_id 
--- left join status_catalogues st on o.fk_status_id = st.status_id;
 
 
 

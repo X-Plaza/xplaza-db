@@ -556,22 +556,17 @@ AS SELECT row_number() OVER () AS id,
 --revenue view
 
 CREATE OR REPLACE VIEW revenue
-AS SELECT row_number() OVER () AS id,
-    temp_revenue.total_expense,
-    temp_revenue.total_income,
-    temp_revenue.total_income - temp_revenue.total_expense AS total_revenue,
-    temp_revenue.shop_id
-   FROM ( SELECT sum(p.product_buying_price * (p.quantity + tp.monthly_sold_unit)::double precision) AS total_expense,
-            temp_income.total_income,
-            s.shop_id
-           FROM ( SELECT sum(o.grand_total_price) AS total_income,
-                    o.fk_shop_id
-                   FROM orders o
-                  GROUP BY o.fk_shop_id) temp_income
-             LEFT JOIN shops s ON temp_income.fk_shop_id = s.shop_id
-             LEFT JOIN products p ON s.shop_id = p.fk_shop_id
-             LEFT JOIN top_product tp ON tp.product_id = p.product_id
-          GROUP BY s.shop_id, temp_income.total_income) temp_revenue;
+AS select total_expense,
+total_income,
+total_income - total_expense AS total_revenue,
+shop_id
+FROM (SELECT sum(p.product_buying_price * (p.quantity + tp.monthly_sold_unit)::double precision) AS total_expense,
+temp_income.total_income, s.shop_id
+FROM (SELECT sum(o.grand_total_price) AS total_income, o.fk_shop_id FROM orders o GROUP BY o.fk_shop_id) temp_income
+LEFT JOIN shops s ON temp_income.fk_shop_id = s.shop_id
+LEFT JOIN products p ON s.shop_id = p.fk_shop_id
+LEFT JOIN top_product tp ON tp.product_id = p.product_id
+GROUP BY s.shop_id, temp_income.total_income) temp_revenue;
 
 --product to stock view
 CREATE OR REPLACE VIEW product_to_stock

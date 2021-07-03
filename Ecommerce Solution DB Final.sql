@@ -521,32 +521,66 @@ ALTER TABLE coupons DROP COLUMN is_active;
 ALTER TABLE coupons ADD "is_active" bool DEFAULT false;
 
 -- top_customer view
+
 CREATE OR REPLACE VIEW top_customer
-AS SELECT row_number() OVER () AS id,
-    c.customer_id, concat(c.first_name,' ',c.last_name) as customer_name,COALESCE (SUM(o.grand_total_price), 0) as total_order_amount, o.fk_shop_id as shop_id
-   FROM customers c
-     LEFT JOIN orders o ON o.fk_customer_id = c.customer_id
-   group by 
-     c.customer_id, o.fk_shop_id 
-order by total_order_amount desc
+AS SELECT temp.id,
+    temp.customer_id,
+    temp.customer_name,
+    temp.total_order_amount,
+    temp.shop_id
+   FROM ( SELECT row_number() OVER () AS id,
+            c.customer_id,
+            concat(c.first_name, ' ', c.last_name) AS customer_name,
+            COALESCE(sum(o.grand_total_price), 0::double precision) AS total_order_amount,
+            o.fk_shop_id AS shop_id
+           FROM customers c
+             LEFT JOIN orders o ON o.fk_customer_id = c.customer_id
+          GROUP BY c.customer_id, o.fk_shop_id
+          ORDER BY (COALESCE(sum(o.grand_total_price), 0::double precision)) DESC) temp
+  WHERE temp.shop_id IS NOT NULL;
 
 -- top_product view
 
 CREATE OR REPLACE VIEW top_product
 AS SELECT row_number() OVER () AS id,
-    p.product_id, p.product_name, COALESCE (SUM(oi.order_item_quantity), 0) as monthly_sold_unit, o.fk_shop_id as shop_id
+    p.product_id,
+    p.product_name,
+    COALESCE(sum(oi.order_item_quantity), 0::bigint) AS monthly_sold_unit,
+    o.fk_shop_id AS shop_id
    FROM products p
      LEFT JOIN order_items oi ON oi.fk_product_id = p.product_id
-     left join orders o on oi.fk_order_id = o.order_id 
-   group by 
-     p.product_id, o.fk_shop_id 
-order by monthly_sold_unit desc
+     LEFT JOIN orders o ON oi.fk_order_id = o.order_id
+  GROUP BY p.product_id, o.fk_shop_id
+  ORDER BY (COALESCE(sum(oi.order_item_quantity), 0::bigint)) DESC;
+
+--revenue view
+
+CREATE OR REPLACE VIEW revenue
+AS SELECT row_number() OVER () AS id,
+    temp_revenue.total_expense,
+    temp_revenue.total_income,
+    temp_revenue.total_income - temp_revenue.total_expense AS total_revenue,
+    temp_revenue.shop_id
+   FROM ( SELECT sum(p.product_buying_price * (p.quantity + tp.monthly_sold_unit)::double precision) AS total_expense,
+            temp_income.total_income,
+            s.shop_id
+           FROM ( SELECT sum(o.grand_total_price) AS total_income,
+                    o.fk_shop_id
+                   FROM orders o
+                  GROUP BY o.fk_shop_id) temp_income
+             LEFT JOIN shops s ON temp_income.fk_shop_id = s.shop_id
+             LEFT JOIN products p ON s.shop_id = p.fk_shop_id
+             LEFT JOIN top_product tp ON tp.product_id = p.product_id
+          GROUP BY s.shop_id, temp_income.total_income) temp_revenue;
 
 --product to stock view
-
 CREATE OR REPLACE VIEW product_to_stock
 AS SELECT row_number() OVER () AS id,
-    product_id, product_name, quantity as remaining_unit from products
-    where quantity <= 5
-    order by remaining_unit
+    p.product_id,
+    p.product_name,
+    p.quantity AS remaining_unit,
+    p.fk_shop_id AS shop_id
+   FROM products p
+  WHERE p.quantity <= 5
+  ORDER BY p.quantity;
 

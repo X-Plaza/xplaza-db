@@ -520,6 +520,26 @@ ALTER TABLE coupons DROP COLUMN is_active;
 
 ALTER TABLE coupons ADD "is_active" bool DEFAULT false;
 
+-- top_customer view
+CREATE OR REPLACE VIEW top_customer
+AS SELECT row_number() OVER () AS id,
+    c.customer_id, concat(c.first_name,' ',c.last_name) as customer_name,COALESCE (SUM(o.grand_total_price), 0) as total_order_amount, o.fk_shop_id as shop_id
+   FROM customers c
+     LEFT JOIN orders o ON o.fk_customer_id = c.customer_id
+   group by 
+     c.customer_id, o.fk_shop_id 
+order by total_order_amount desc
 
+-- top_product view
+
+CREATE OR REPLACE VIEW top_product
+AS SELECT row_number() OVER () AS id,
+    p.product_id, p.product_name, COALESCE (SUM(oi.order_item_quantity), 0) as monthly_sold_unit, o.fk_shop_id as shop_id
+   FROM products p
+     LEFT JOIN order_items oi ON oi.fk_product_id = p.product_id
+     left join orders o on oi.fk_order_id = o.order_id 
+   group by 
+     p.product_id, o.fk_shop_id 
+order by monthly_sold_unit desc
 
 

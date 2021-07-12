@@ -449,9 +449,9 @@ ALTER TABLE menu_module_link ADD "update" bool DEFAULT false;
 ALTER TABLE menu_module_link ADD "delete" bool DEFAULT false;
 
 CREATE OR REPLACE VIEW login AS
-select a.admin_user_id, a.user_name, r.role_id, r.role_name, false as authentication 
-from admin_users a
-left join roles r on a.fk_role_id = r.role_id;
+select au.admin_user_id, au.user_name, au.full_name, r.role_id, r.role_name, false as authentication 
+from admin_users au
+left join roles r on au.fk_role_id = r.role_id;
 
 CREATE OR REPLACE VIEW permissions AS
 select row_number() OVER() AS id, au.admin_user_id, m2.menu_name, mml.full, mml.view, mml.add, mml.update, mml.delete 
@@ -579,3 +579,6 @@ AS SELECT row_number() OVER () AS id,
   WHERE p.quantity <= 5
   ORDER BY p.quantity;
 
+ALTER TABLE admin_users ADD full_name varchar NULL;
+
+ALTER TABLE shops ADD shop_description varchar NULL;

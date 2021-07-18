@@ -733,3 +733,66 @@ BEFORE INSERT OR UPDATE OR DELETE ON orders
     FOR EACH ROW EXECUTE PROCEDURE order_stamp();
 
 
+CREATE FUNCTION order_item_stamp() RETURNS trigger AS $order_item_stamp$
+    begin
+	    IF (TG_OP = 'UPDATE') THEN
+           -- Remember when changed the order
+           NEW.last_updated_at := current_timestamp;
+           RETURN NEW;
+        ELSIF (TG_OP = 'DELETE') then
+            -- Insert into bin table
+            INSERT INTO bin_order_items select OLD.*;
+            RETURN OLD;
+        END IF;
+    END;
+$order_item_stamp$ LANGUAGE plpgsql;
+
+CREATE TRIGGER order_item_stamp
+BEFORE INSERT OR UPDATE OR DELETE ON order_items
+    FOR EACH ROW EXECUTE PROCEDURE order_item_stamp();
+
+
+CREATE FUNCTION product_stamp() RETURNS trigger AS $product_stamp$
+    begin
+	    IF (TG_OP = 'INSERT') THEN
+	       -- Remember when we recieved the order
+           NEW.created_at := current_timestamp;
+           RETURN NEW;
+        ELSIF (TG_OP = 'UPDATE') THEN
+           -- Remember when changed the order
+           NEW.last_updated_at := current_timestamp;
+           RETURN NEW;
+        ELSIF (TG_OP = 'DELETE') then
+            -- Insert into bin table
+            INSERT INTO bin_products select OLD.*;
+            RETURN OLD;
+        END IF;
+    END;
+$product_stamp$ LANGUAGE plpgsql;
+
+CREATE TRIGGER product_stamp
+BEFORE INSERT OR UPDATE OR DELETE ON products
+    FOR EACH ROW EXECUTE PROCEDURE product_stamp();
+	
+	
+CREATE FUNCTION product_image_stamp() RETURNS trigger AS $product_image_stamp$
+    begin
+	    IF (TG_OP = 'INSERT') THEN
+	       -- Remember when we recieved the order
+           NEW.created_at := current_timestamp;
+           RETURN NEW;
+        ELSIF (TG_OP = 'UPDATE') THEN
+           -- Remember when changed the order
+           NEW.last_updated_at := current_timestamp;
+           RETURN NEW;
+        ELSIF (TG_OP = 'DELETE') then
+            -- Insert into bin table
+            INSERT INTO bin_product_images select OLD.*;
+            RETURN OLD;
+        END IF;
+    END;
+$product_image_stamp$ LANGUAGE plpgsql;
+
+CREATE TRIGGER product_image_stamp
+BEFORE INSERT OR UPDATE OR DELETE ON product_images
+    FOR EACH ROW EXECUTE PROCEDURE product_image_stamp()

@@ -795,4 +795,14 @@ $product_image_stamp$ LANGUAGE plpgsql;
 
 CREATE TRIGGER product_image_stamp
 BEFORE INSERT OR UPDATE OR DELETE ON product_images
-    FOR EACH ROW EXECUTE PROCEDURE product_image_stamp()
+    FOR EACH ROW EXECUTE PROCEDURE product_image_stamp();
+	
+	
+ALTER TABLE coupons ADD min_shopping_amount float8 NULL;
+
+CREATE OR REPLACE VIEW coupon_shop_list
+AS SELECT row_number() OVER () AS id,
+    csl.*,
+    s.shop_name 
+   FROM coupon_shop_link csl
+     LEFT JOIN shops s ON s.shop_id = csl.shop_id;

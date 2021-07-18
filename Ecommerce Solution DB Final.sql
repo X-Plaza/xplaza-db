@@ -1,7 +1,6 @@
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 
-
 CREATE TABLE "customers" (
   "customer_id" BIGSERIAL PRIMARY KEY,
   "first_name" varchar,
@@ -582,3 +581,155 @@ AS SELECT row_number() OVER () AS id,
 ALTER TABLE admin_users ADD full_name varchar NULL;
 
 ALTER TABLE shops ADD shop_description varchar NULL;
+
+CREATE TABLE "coupon_shop_link" (
+  "shop_id" BIGSERIAL,
+  "coupon_id" BIGSERIAL,
+  PRIMARY KEY ("shop_id", "coupon_id")
+);
+
+ALTER TABLE "coupon_shop_link" ADD FOREIGN KEY ("shop_id") REFERENCES "shops" ("shop_id");
+ALTER TABLE "coupon_shop_link" ADD FOREIGN KEY ("coupon_id") REFERENCES "coupons" ("coupon_id");
+
+ALTER TABLE orders ADD fk_currency_id int NULL;
+ALTER TABLE "orders" ADD FOREIGN KEY ("fk_currency_id") REFERENCES "currencies" ("currency_id");
+ALTER TABLE orders ADD last_updated_by int NULL;
+ALTER TABLE orders ADD last_updated_at timestamp(0) NULL;
+ALTER TABLE orders ADD additional_info text NULL;
+ALTER TABLE orders ADD remarks text NULL;
+
+
+ALTER TABLE order_items ADD last_updated_by int NULL;
+ALTER TABLE order_items ADD last_updated_at timestamp(0) NULL;
+
+ALTER TABLE products ADD created_by int NULL;
+ALTER TABLE products ADD created_at timestamp(0) NULL;
+ALTER TABLE products ADD last_updated_by int NULL;
+ALTER TABLE products ADD last_updated_at timestamp(0) NULL;
+
+ALTER TABLE product_images ADD created_by int NULL;
+ALTER TABLE product_images ADD created_at timestamp(0) NULL;
+ALTER TABLE product_images ADD last_updated_by int NULL;
+ALTER TABLE product_images ADD last_updated_at timestamp(0) NULL;
+
+CREATE TABLE bin_orders (
+	order_id bigserial NOT NULL,
+	total_price float8 NULL,
+	discount_amount float8 NULL,
+	grand_total_price float8 NULL,
+	delivery_address varchar NULL,
+	fk_customer_id int4 NULL,
+	fk_shop_id int4 NULL,
+	fk_delivery_schedule_id int4 NULL,
+	fk_delivery_cost_id int4 NULL,
+	fk_payment_type_id int4 NULL,
+	fk_status_id int4 NULL,
+	fk_coupon_id int4 NULL,
+	received_time timestamp(0),
+	date_to_deliver date NULL,
+	last_updated_by int NULL,
+	last_updated_at timestamp(0),
+	CONSTRAINT bin_orders_pkey PRIMARY KEY (order_id)
+);
+
+-- bin_orders foreign keys
+ALTER TABLE bin_orders ADD CONSTRAINT bin_orders_fk_coupon_id_fkey FOREIGN KEY (fk_coupon_id) REFERENCES coupons(coupon_id);
+ALTER TABLE bin_orders ADD CONSTRAINT bin_orders_fk_customer_id_fkey FOREIGN KEY (fk_customer_id) REFERENCES customers(customer_id);
+ALTER TABLE bin_orders ADD CONSTRAINT bin_orders_fk_delivery_cost_id_fkey FOREIGN KEY (fk_delivery_cost_id) REFERENCES delivery_costs(delivery_cost_id);
+ALTER TABLE bin_orders ADD CONSTRAINT bin_orders_fk_delivery_schedule_id_fkey FOREIGN KEY (fk_delivery_schedule_id) REFERENCES delivery_schedules(delivery_schedule_id);
+ALTER TABLE bin_orders ADD CONSTRAINT bin_orders_fk_payment_type_id_fkey FOREIGN KEY (fk_payment_type_id) REFERENCES payment_types(payment_type_id);
+ALTER TABLE bin_orders ADD CONSTRAINT bin_orders_fk_shop_id_fkey FOREIGN KEY (fk_shop_id) REFERENCES shops(shop_id);
+ALTER TABLE bin_orders ADD CONSTRAINT bin_orders_fk_status_id_fkey FOREIGN KEY (fk_status_id) REFERENCES status_catalogues(status_id);
+ALTER TABLE bin_orders ADD fk_currency_id int NULL;
+ALTER TABLE "bin_orders" ADD FOREIGN KEY ("fk_currency_id") REFERENCES "currencies" ("currency_id");
+ALTER TABLE bin_orders ADD additional_info text NULL;
+ALTER TABLE bin_orders ADD remarks text NULL;
+
+CREATE TABLE bin_order_items (
+	order_item_id bigserial NOT NULL,
+	fk_order_id int4 NULL,
+	fk_product_id int4 NULL,
+	order_item_name varchar NULL,
+	order_item_total_price float8 NULL,
+	fk_currency_id int4 NULL,
+	order_item_quantity int4 NULL,
+	order_item_unit_price float8 NULL,
+	order_item_category varchar NULL,
+	order_item_quantity_type varchar NULL,
+	order_item_image varchar NULL,
+	last_updated_by int4 NULL,
+	last_updated_at timestamp(0) NULL,
+	CONSTRAINT bin_order_items_pkey PRIMARY KEY (order_item_id)
+);
+
+-- bin_order_items foreign keys
+ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_currency_id_fkey FOREIGN KEY (fk_currency_id) REFERENCES currencies(currency_id);
+ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_order_id_fkey FOREIGN KEY (fk_order_id) REFERENCES bin_orders(order_id);
+ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_product_id_fkey FOREIGN KEY (fk_product_id) REFERENCES products(product_id);
+
+CREATE TABLE bin_products (
+	product_id bigserial NOT NULL,
+	product_name text NULL,
+	product_description text NULL,
+	fk_brand_id int4 NULL,
+	fk_category_id int4 NULL,
+	fk_product_var_type_id int4 NULL,
+	product_var_type_value int4 NULL,
+	product_buying_price float8 NULL,
+	product_selling_price float8 NULL,
+	fk_currency_id int4 NULL,
+	fk_shop_id int4 NOT NULL,
+	quantity int4 NOT NULL DEFAULT 1,
+	created_by int4 NULL,
+	created_at timestamp(0) NULL,
+	last_updated_by int4 NULL,
+	last_updated_at timestamp(0) NULL,
+	CONSTRAINT bin_products_pkey PRIMARY KEY (product_id)
+);
+
+-- products foreign keys
+ALTER TABLE bin_products ADD CONSTRAINT bin_products_fk_brand_id_fkey FOREIGN KEY (fk_brand_id) REFERENCES brands(brand_id);
+ALTER TABLE bin_products ADD CONSTRAINT bin_products_fk_category_id_fkey FOREIGN KEY (fk_category_id) REFERENCES categories(category_id);
+ALTER TABLE bin_products ADD CONSTRAINT bin_products_fk_currency_id_fkey FOREIGN KEY (fk_currency_id) REFERENCES currencies(currency_id);
+ALTER TABLE bin_products ADD CONSTRAINT bin_products_fk_product_var_type_id_fkey FOREIGN KEY (fk_product_var_type_id) REFERENCES product_variation_types(product_var_type_id);
+ALTER TABLE bin_products ADD CONSTRAINT bin_products_fk_shop_id_fkey FOREIGN KEY (fk_shop_id) REFERENCES shops(shop_id);
+
+CREATE TABLE bin_product_images (
+	product_image_id int8 NOT NULL DEFAULT nextval('product_images_product_images_id_seq'::regclass),
+	fk_product_id int4 NULL,
+	product_image_name varchar NULL,
+	product_image_path varchar NULL,
+	created_by int4 NULL,
+	created_at timestamp(0) NULL,
+	last_updated_by int4 NULL,
+	last_updated_at timestamp(0) NULL,
+	CONSTRAINT bin_product_images_pkey PRIMARY KEY (product_image_id)
+);
+
+-- product_images foreign keys
+ALTER TABLE bin_product_images ADD CONSTRAINT bin_product_images_fk_product_id_fkey FOREIGN KEY (fk_product_id) REFERENCES bin_products(product_id);
+
+   
+CREATE FUNCTION order_stamp() RETURNS trigger AS $order_stamp$
+    begin
+	    IF (TG_OP = 'INSERT') THEN
+	       -- Remember when we recieved the order
+           NEW.received_time := current_timestamp;
+           RETURN NEW;
+        ELSIF (TG_OP = 'UPDATE') THEN
+           -- Remember when changed the order
+           NEW.last_updated_at := current_timestamp;
+           RETURN NEW;
+        ELSIF (TG_OP = 'DELETE') then
+            -- Insert into bin table
+            INSERT INTO bin_orders select OLD.*;
+            RETURN OLD;
+        END IF;
+    END;
+$order_stamp$ LANGUAGE plpgsql;
+
+CREATE TRIGGER order_stamp
+BEFORE INSERT OR UPDATE OR DELETE ON orders
+    FOR EACH ROW EXECUTE PROCEDURE order_stamp();
+
+

@@ -806,3 +806,16 @@ AS SELECT row_number() OVER () AS id,
     s.shop_name 
    FROM coupon_shop_link csl
      LEFT JOIN shops s ON s.shop_id = csl.shop_id;
+	 
+	 
+
+ALTER TABLE admin_users ADD is_confirmed bool NULL;
+
+CREATE TABLE confirmation_tokens (
+	token_id bigserial NOT NULL,
+	confirmation_token text NULL,
+	admin_user_id int not null,
+	created_date timestamp(0),
+	CONSTRAINT confirmation_tokens_pkey PRIMARY KEY (token_id)
+);
+ALTER TABLE "confirmation_tokens" ADD FOREIGN KEY ("admin_user_id") REFERENCES "admin_users" ("admin_user_id");

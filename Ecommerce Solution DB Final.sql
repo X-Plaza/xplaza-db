@@ -813,9 +813,11 @@ ALTER TABLE admin_users ADD is_confirmed bool NULL;
 
 CREATE TABLE confirmation_tokens (
 	token_id bigserial NOT NULL,
-	confirmation_token text NULL,
-	admin_user_id int not null,
-	created_date timestamp(0),
+	confirmation_token text NOT NULL,
+	user_email text NOT NULL,
+	created_date timestamp(0) NULL,
 	CONSTRAINT confirmation_tokens_pkey PRIMARY KEY (token_id)
 );
-ALTER TABLE "confirmation_tokens" ADD FOREIGN KEY ("admin_user_id") REFERENCES "admin_users" ("admin_user_id");
+
+ALTER TABLE admin_users RENAME COLUMN is_confirmed TO confirmation_code;
+ALTER TABLE admin_users ALTER COLUMN confirmation_code TYPE text USING confirmation_code::text;

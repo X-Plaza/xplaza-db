@@ -666,6 +666,7 @@ CREATE TABLE bin_order_items (
 ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_currency_id_fkey FOREIGN KEY (fk_currency_id) REFERENCES currencies(currency_id);
 ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_order_id_fkey FOREIGN KEY (fk_order_id) REFERENCES bin_orders(order_id);
 ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_product_id_fkey FOREIGN KEY (fk_product_id) REFERENCES products(product_id);
+ALTER TABLE bin_order_items DROP CONSTRAINT bin_order_items_fk_order_id_fkey;
 
 CREATE TABLE bin_products (
 	product_id bigserial NOT NULL,
@@ -708,7 +709,7 @@ CREATE TABLE bin_product_images (
 
 -- product_images foreign keys
 ALTER TABLE bin_product_images ADD CONSTRAINT bin_product_images_fk_product_id_fkey FOREIGN KEY (fk_product_id) REFERENCES bin_products(product_id);
-
+ALTER TABLE bin_product_images DROP CONSTRAINT bin_product_images_fk_product_id_fkey;
    
 CREATE FUNCTION order_stamp() RETURNS trigger AS $order_stamp$
     begin

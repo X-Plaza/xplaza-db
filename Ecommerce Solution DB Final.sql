@@ -534,6 +534,7 @@ AS SELECT temp.id,
             o.fk_shop_id AS shop_id
            FROM customers c
              LEFT JOIN orders o ON o.fk_customer_id = c.customer_id
+			 where extract (month FROM o.received_time) = extract (month FROM CURRENT_DATE)
           GROUP BY c.customer_id, o.fk_shop_id
           ORDER BY (COALESCE(sum(o.grand_total_price), 0::double precision)) DESC) temp
   WHERE temp.shop_id IS NOT NULL;
@@ -549,6 +550,7 @@ AS SELECT row_number() OVER () AS id,
    FROM products p
      LEFT JOIN order_items oi ON oi.fk_product_id = p.product_id
      LEFT JOIN orders o ON oi.fk_order_id = o.order_id
+	 where extract (month FROM o.received_time) = extract (month FROM CURRENT_DATE)
   GROUP BY p.product_id, o.fk_shop_id
   ORDER BY (COALESCE(sum(oi.order_item_quantity), 0::bigint)) DESC;
 
@@ -668,6 +670,7 @@ ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_order_id_fkey FORE
 ALTER TABLE bin_order_items ADD CONSTRAINT bin_order_items_fk_product_id_fkey FOREIGN KEY (fk_product_id) REFERENCES products(product_id);
 ALTER TABLE bin_order_items DROP CONSTRAINT bin_order_items_fk_order_id_fkey;
 
+
 CREATE TABLE bin_products (
 	product_id bigserial NOT NULL,
 	product_name text NULL,
@@ -749,7 +752,7 @@ CREATE FUNCTION order_item_stamp() RETURNS trigger AS $order_item_stamp$
 $order_item_stamp$ LANGUAGE plpgsql;
 
 CREATE TRIGGER order_item_stamp
-BEFORE INSERT OR UPDATE OR DELETE ON order_items
+BEFORE UPDATE OR DELETE ON order_items
     FOR EACH ROW EXECUTE PROCEDURE order_item_stamp();
 
 
@@ -822,3 +825,87 @@ CREATE TABLE confirmation_tokens (
 
 ALTER TABLE admin_users RENAME COLUMN is_confirmed TO confirmation_code;
 ALTER TABLE admin_users ALTER COLUMN confirmation_code TYPE text USING confirmation_code::text;
+
+ALTER TABLE order_items DROP CONSTRAINT order_items_fk_product_id_fkey;
+ALTER TABLE order_items RENAME COLUMN fk_product_id TO product_id;
+
+ALTER TABLE bin_order_items DROP CONSTRAINT bin_order_items_fk_product_id_fkey;
+ALTER TABLE bin_order_items RENAME COLUMN fk_product_id TO product_id;
+
+ALTER TABLE order_items ADD order_item_var_type_id int NULL;
+ALTER TABLE order_items ADD order_item_var_type_value int NULL;
+
+ALTER TABLE bin_order_items ADD order_item_var_type_id int NULL;
+ALTER TABLE bin_order_items ADD order_item_var_type_value int NULL;
+
+ALTER TABLE order_items RENAME COLUMN order_item_var_type_id TO order_item_var_type_name;
+ALTER TABLE bin_order_items RENAME COLUMN order_item_var_type_id TO order_item_var_type_name;
+
+ALTER TABLE order_items ALTER COLUMN order_item_var_type_name TYPE text USING order_item_var_type_name::text;
+ALTER TABLE bin_order_items ALTER COLUMN order_item_var_type_name TYPE text USING order_item_var_type_name::text;
+
+
+CREATE OR REPLACE VIEW order_details
+AS SELECT row_number() OVER () AS id,
+o.order_id, o.total_price, o.discount_amount, o.grand_total_price, o.delivery_address, o.fk_customer_id, o.fk_shop_id, o.fk_delivery_schedule_id, 
+o.fk_delivery_cost_id, o.fk_payment_type_id, o.fk_status_id, COALESCE(o.fk_coupon_id, 0) as fk_coupon_id, o.received_time, o.date_to_deliver, o.fk_currency_id, 
+COALESCE(o.additional_info,'N/A') as additional_info, COALESCE(o.remarks,'N/A') as remarks, 
+concat(c.first_name,' ',c.last_name) as customer_name, c.mobile_no, 
+s.shop_name, 
+st.status_name, 
+concat(ds.delivery_schedule_start, '-' , ds.delivery_schedule_end) as allotted_time, dc.delivery_cost, 
+pt.payment_type_name, 
+d.delivery_id, d.person_name, d.contact_no, 
+COALESCE(cou.coupon_code,'N/A') as coupon_code, COALESCE(cou.coupon_amount, 0) as coupon_amount, 
+concat(oi.order_item_name, ' (', oi.order_item_var_type_value, oi.order_item_var_type_name, ')') as order_item_name, 
+oi.order_item_category, oi.order_item_quantity, oi.order_item_quantity_type, oi.order_item_unit_price, 
+oi.order_item_total_price, oi.order_item_image, oi.order_item_id, 
+cur.currency_name, cur.currency_sign 
+from orders o 
+left join currencies cur on cur.currency_id = o.fk_currency_id 
+left join order_items oi on o.order_id = oi.fk_order_id 
+left join delivery_costs dc on dc.delivery_cost_id = o.fk_delivery_cost_id 
+left join payment_types pt on o.fk_payment_type_id = pt.payment_type_id 
+left join deliveries d on o.order_id = d.fk_order_id 
+left join coupons cou on cou.coupon_id = o.fk_coupon_id 
+left join shops s on o.fk_shop_id = s.shop_id 
+left join customers c on o.fk_customer_id = c.customer_id 
+left join delivery_schedules ds on o.fk_delivery_schedule_id = ds.delivery_schedule_id 
+left join status_catalogues st on o.fk_status_id = st.status_id; 
+
+
+ALTER TABLE delivery_costs ALTER COLUMN delivery_slab_start_range TYPE float8 USING delivery_slab_start_range::float8;
+ALTER TABLE delivery_costs ALTER COLUMN delivery_slab_end_range TYPE float8 USING delivery_slab_end_range::float8;
+
+
+CREATE OR REPLACE VIEW product_by_sold_unit
+AS SELECT row_number() OVER () AS id,
+    p.product_id,
+    p.product_name,
+    COALESCE(sum(oi.order_item_quantity), 0::bigint) AS total_sold_unit,
+    p.fk_shop_id AS shop_id
+   FROM products p
+     LEFT JOIN order_items oi ON oi.product_id = p.product_id
+     LEFT JOIN orders o ON oi.fk_order_id = o.order_id
+  GROUP BY p.product_id, o.fk_shop_id
+  ORDER BY total_sold_unit DESC;
+  
+
+CREATE OR REPLACE VIEW public.revenue
+AS SELECT temp_revenue.total_expense,
+    temp_revenue.total_income,
+    temp_revenue.total_income - temp_revenue.total_expense AS total_revenue,
+    temp_revenue.shop_id
+   FROM ( SELECT sum (p.product_buying_price * (p.quantity + psu.total_sold_unit)::double precision) AS total_expense,
+            temp_income.total_income,
+            s.shop_id
+           FROM ( SELECT sum (o.grand_total_price) AS total_income,
+                    o.fk_shop_id
+                   FROM orders o
+                  GROUP BY o.fk_shop_id) temp_income
+             LEFT JOIN shops s ON temp_income.fk_shop_id = s.shop_id
+             LEFT JOIN products p ON s.shop_id = p.fk_shop_id
+             LEFT JOIN product_by_sold_unit psu ON psu.product_id = p.product_id
+          GROUP BY s.shop_id, temp_income.total_income) temp_revenue;
+		  
+

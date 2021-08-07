@@ -909,3 +909,103 @@ AS SELECT temp_revenue.total_expense,
           GROUP BY s.shop_id, temp_income.total_income) temp_revenue;
 		  
 
+ALTER TABLE public.orders RENAME COLUMN fk_customer_id TO customer_id;
+ALTER TABLE public.orders ADD customer_name text NULL;
+ALTER TABLE public.orders RENAME COLUMN fk_shop_id TO shop_id;
+ALTER TABLE public.orders ADD shop_name text NULL;
+ALTER TABLE public.orders DROP  CONSTRAINT orders_fk_delivery_schedule_id_fkey CASCADE;
+ALTER TABLE public.orders DROP COLUMN fk_delivery_schedule_id CASCADE;
+ALTER TABLE public.orders ADD delivery_schedule_start time with time zone NULL;
+ALTER TABLE public.orders ADD delivery_schedule_end time with time zone NULL;
+ALTER TABLE public.orders ADD delivery_cost float8 NULL;
+ALTER TABLE public.orders ADD coupon_code text NULL;
+ALTER TABLE public.orders ADD coupon_amount float8 NULL;
+ALTER TABLE public.orders ADD mobile_no text NULL;
+ALTER TABLE public.orders RENAME COLUMN fk_coupon_id TO coupon_id;
+ALTER TABLE public.orders ALTER COLUMN received_time TYPE timestamp with time zone USING received_time::timestamp with time zone;
+ALTER TABLE public.orders ALTER COLUMN last_updated_at TYPE timestamp with time zone USING last_updated_at::timestamp with time zone;
+ALTER TABLE public.orders RENAME COLUMN fk_delivery_cost_id TO delivery_cost_id;
+
+-- public.top_customer source
+
+CREATE OR REPLACE VIEW public.top_customer
+AS SELECT temp.id,
+    temp.customer_id,
+    temp.customer_name,
+    temp.total_order_amount,
+    temp.shop_id
+   FROM ( SELECT row_number() OVER () AS id,
+            o.customer_id,
+            o.customer_name,
+            COALESCE(sum(o.grand_total_price), 0::double precision) AS total_order_amount,
+            o.shop_id AS shop_id
+           FROM orders o
+          WHERE date_part('month'::text, o.received_time) = date_part('month'::text, CURRENT_DATE)
+          GROUP BY o.customer_id, o.customer_name, o.shop_id
+          ORDER BY (COALESCE(sum(o.grand_total_price), 0::double precision)) DESC) temp
+  WHERE temp.shop_id IS NOT NULL;
+
+-- public.top_product source
+
+CREATE OR REPLACE VIEW public.top_product
+AS SELECT row_number() OVER () AS id,
+    oi.product_id,
+    oi.order_item_name as product_name,
+    COALESCE(sum(oi.order_item_quantity), 0::bigint) AS monthly_sold_unit,
+    o.shop_id AS shop_id
+   FROM order_items oi
+     LEFT JOIN orders o ON oi.fk_order_id = o.order_id
+  WHERE date_part('month'::text, o.received_time) = date_part('month'::text, CURRENT_DATE)
+  GROUP BY oi.product_id, product_name, o.shop_id 
+  ORDER BY (COALESCE(sum(oi.order_item_quantity), 0::bigint)) DESC;
+  
+  
+  -- public.order_details source
+
+CREATE OR REPLACE VIEW public.order_details
+AS SELECT row_number() OVER () AS id,
+    o.order_id,
+    o.total_price,
+    o.discount_amount,
+    o.grand_total_price,
+    o.delivery_address,
+    o.customer_id,
+    o.shop_id,
+    o.fk_payment_type_id,
+    o.fk_status_id,
+    COALESCE(o.coupon_id, 0) AS coupon_id,
+    o.received_time,
+    o.date_to_deliver,
+    o.fk_currency_id,
+    COALESCE(o.additional_info, 'N/A'::text) AS additional_info,
+    COALESCE(o.remarks, 'N/A'::text) AS remarks,
+    o.customer_name,
+    o.mobile_no,
+    o.shop_name,
+    st.status_name,
+    concat(o.delivery_schedule_start, '-', o.delivery_schedule_end) AS allotted_time,
+    o.delivery_cost,
+    pt.payment_type_name,
+    d.delivery_id,
+    d.person_name,
+    d.contact_no,
+    COALESCE(o.coupon_code, 'N/A'::character varying) AS coupon_code,
+    COALESCE(o.coupon_amount, 0::double precision) AS coupon_amount,
+    concat(oi.order_item_name, ' (', oi.order_item_var_type_value, oi.order_item_var_type_name, ')') AS order_item_name,
+    oi.order_item_category,
+    oi.order_item_quantity,
+    oi.order_item_quantity_type,
+    oi.order_item_unit_price,
+    oi.order_item_total_price,
+    oi.order_item_image,
+    oi.order_item_id,
+    cur.currency_name,
+    cur.currency_sign
+   FROM orders o
+   	 LEFT JOIN order_items oi ON o.order_id = oi.fk_order_id
+     LEFT JOIN currencies cur ON cur.currency_id = o.fk_currency_id
+     LEFT JOIN payment_types pt ON o.fk_payment_type_id = pt.payment_type_id
+     LEFT JOIN deliveries d ON o.order_id = d.fk_order_id
+     LEFT JOIN status_catalogues st ON o.fk_status_id = st.status_id;
+	 
+	 

@@ -1009,3 +1009,5 @@ AS SELECT row_number() OVER () AS id,
      LEFT JOIN status_catalogues st ON o.fk_status_id = st.status_id;
 	 
 	 
+ALTER TABLE orders ADD net_total float8 NULL;
+ALTER TABLE bin_orders  ADD net_total float8 NULL;

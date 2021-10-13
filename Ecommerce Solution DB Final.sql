@@ -1011,3 +1011,4 @@ AS SELECT row_number() OVER () AS id,
 	 
 ALTER TABLE orders ADD net_total float8 NULL;
 ALTER TABLE bin_orders  ADD net_total float8 NULL;
+ALTER TABLE customers ALTER COLUMN date_of_birth TYPE date USING date_of_birth::date;

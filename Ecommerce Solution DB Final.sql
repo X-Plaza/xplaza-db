@@ -1012,3 +1012,8 @@ AS SELECT row_number() OVER () AS id,
 ALTER TABLE orders ADD net_total float8 NULL;
 ALTER TABLE bin_orders  ADD net_total float8 NULL;
 ALTER TABLE customers ALTER COLUMN date_of_birth TYPE date USING date_of_birth::date;
+ALTER TABLE customers ADD "password" varchar NULL;
+ALTER TABLE customers ADD salt varchar NULL;
+ALTER TABLE customers ADD otp varchar NULL;
+ALTER TABLE customers ADD created_at timestamp with time zone NULL;
+ALTER TABLE customers ADD updated_at timestamp with time zone NULL;

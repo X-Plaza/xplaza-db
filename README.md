@@ -37,11 +37,3 @@ This repository contains SQL scripts for initializing and managing the database 
 ## Requirements
 
 - PostgreSQL 12+
-
-## License
-
-MIT License
-
----
-
-For questions or contributions, please open an issue or submit a pull request.

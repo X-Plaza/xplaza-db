@@ -14,13 +14,12 @@ This repository contains SQL scripts for initializing and managing the database 
 ## Files
 
 - `ecommerce_xplaza_schema.sql`: Main install script for the e-commerce solution, including schema, triggers, views, and reference data.
-- `ecommerce_xplaza_fresh_install.sql`: Alternative fresh install script with similar content and structure.
 
 ## How to Use
 
 1. **Setup Database**
    - Create a new PostgreSQL database.
-   - Run either `ecommerce_xplaza_schema.sql` or `ecommerce_xplaza_fresh_install.sql` using your preferred SQL client (e.g., `psql`, DBeaver, DataGrip).
+   - Run either `ecommerce_xplaza_schema.sql` using your preferred SQL client (e.g., `psql`, DBeaver, DataGrip).
 2. **Reference Data**
    - All required reference data is included and will be inserted automatically.
 3. **Customization**

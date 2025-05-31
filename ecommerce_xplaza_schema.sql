@@ -233,17 +233,6 @@ CREATE TABLE "states" (
   "fk_country_id" int
 );
 
-CREATE TABLE IF NOT EXISTS countries (
-  country_id int NOT NULL DEFAULT NEXTVAL ('countries_country_id_seq'),
-  iso char(2) NOT NULL,
-  country_name varchar(80) NOT NULL,
-  nicename varchar(80) NOT NULL,
-  iso3 char(3) DEFAULT NULL,
-  numcode smallint DEFAULT NULL,
-  phonecode int NOT NULL,
-  PRIMARY KEY (country_id)
-);
-
 CREATE TABLE "currencies" (
   "currency_id" BIGSERIAL PRIMARY KEY,
   "currency_name" varchar,
@@ -443,6 +432,19 @@ CREATE TABLE coupon_shop_list (
     id BIGINT PRIMARY KEY,
     coupon_id BIGINT,
     shop_id BIGINT
+);
+
+CREATE SEQUENCE IF NOT EXISTS countries_country_id_seq;
+
+CREATE TABLE IF NOT EXISTS countries (
+  country_id int NOT NULL DEFAULT NEXTVAL ('countries_country_id_seq'),
+  iso char(2) NOT NULL,
+  country_name varchar(80) NOT NULL,
+  nicename varchar(80) NOT NULL,
+  iso3 char(3) DEFAULT NULL,
+  numcode smallint DEFAULT NULL,
+  phonecode int NOT NULL,
+  PRIMARY KEY (country_id)
 );
 
 -- 3. FOREIGN KEYS

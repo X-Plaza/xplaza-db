@@ -312,7 +312,7 @@ CREATE TABLE "modules" (
 CREATE TABLE "menu_module_link" (
   "menu_id" BIGSERIAL,
   "module_id" BIGSERIAL,
-  "full" bool NOT NULL DEFAULT false,
+  "all_of_them" bool NOT NULL DEFAULT false,
   "view" bool DEFAULT false,
   "add" bool DEFAULT false,
   "update" bool DEFAULT false,
@@ -409,6 +409,28 @@ CREATE TABLE "confirmation_tokens" (
   "created_date" timestamp
 );
 
+CREATE TABLE platform_info (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(255),
+    invoice VARCHAR(255),
+    cell_no VARCHAR(255),
+    additional_info VARCHAR(255),
+    banner_image VARCHAR(255),
+    banner_image_path VARCHAR(255)
+);
+
+CREATE TABLE admin_user_shop_list (
+    id BIGINT PRIMARY KEY,
+    admin_user_id BIGINT,
+    shop_id BIGINT
+);
+
+CREATE TABLE coupon_shop_list (
+    id BIGINT PRIMARY KEY,
+    coupon_id BIGINT,
+    shop_id BIGINT
+);
+
 -- 2. SEQUENCES
 CREATE SEQUENCE IF NOT EXISTS countries_country_id_seq;
 
@@ -492,6 +514,12 @@ ALTER TABLE "menu_module_link" ADD FOREIGN KEY ("module_id") REFERENCES "modules
 ALTER TABLE "admin_user_shop_link" ADD FOREIGN KEY ("admin_user_id") REFERENCES "admin_users" ("admin_user_id");
 ALTER TABLE "admin_user_shop_link" ADD FOREIGN KEY ("shop_id") REFERENCES "shops" ("shop_id");
 
+ALTER TABLE admin_user_shop_list ADD CONSTRAINT fk_admin_user FOREIGN KEY (admin_user_id) REFERENCES admin_users(admin_user_id);
+ALTER TABLE admin_user_shop_list ADD CONSTRAINT fk_shop FOREIGN KEY (shop_id) REFERENCES shops(shop_id);
+
+ALTER TABLE coupon_shop_list ADD CONSTRAINT fk_coupon FOREIGN KEY (coupon_id) REFERENCES coupons(coupon_id);
+ALTER TABLE coupon_shop_list ADD CONSTRAINT fk_shop FOREIGN KEY (shop_id) REFERENCES shops(shop_id);
+
 -- 5. FUNCTIONS & TRIGGERS (define once, after all tables)
 CREATE OR REPLACE FUNCTION order_stamp() RETURNS trigger AS $order_stamp$
     begin
@@ -573,7 +601,7 @@ FROM admin_users au
 LEFT JOIN roles r ON au.fk_role_id = r.role_id;
 
 CREATE OR REPLACE VIEW permission AS
-SELECT row_number() OVER() AS id, au.admin_user_id, m2.menu_name, mml.full, mml.view, mml.add, mml.update, mml.delete 
+SELECT row_number() OVER() AS id, au.admin_user_id, m2.menu_name, mml.all_of_them, mml.view, mml.add, mml.update, mml.delete 
 FROM admin_users au 
 LEFT JOIN roles r ON au.fk_role_id = r.role_id 
 LEFT JOIN modules m ON r.fk_module_id = m.module_id 

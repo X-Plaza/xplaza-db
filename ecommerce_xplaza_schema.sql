@@ -4,10 +4,7 @@
 DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public;
 
--- 2. SEQUENCES
-CREATE SEQUENCE IF NOT EXISTS countries_country_id_seq;
-
--- 3. TABLES
+-- 2. TABLES
 CREATE TABLE "customers" (
   "customer_id" BIGSERIAL PRIMARY KEY,
   "first_name" varchar,
@@ -327,7 +324,7 @@ CREATE TABLE "menus" (
 CREATE TABLE "menu_module_link" (
   "menu_id" BIGSERIAL,
   "module_id" BIGSERIAL,
-  "full" bool NOT NULL DEFAULT false,
+  "all_of_them" bool NOT NULL DEFAULT false,
   "view" bool DEFAULT false,
   "add" bool DEFAULT false,
   "update" bool DEFAULT false,
@@ -426,7 +423,29 @@ CREATE TABLE bin_product_images (
   CONSTRAINT bin_product_images_pkey PRIMARY KEY (product_image_id)
 );
 
--- 4. FOREIGN KEYS
+CREATE TABLE platform_info (
+    id BIGINT PRIMARY KEY,
+    name VARCHAR(255),
+    invoice VARCHAR(255),
+    cell_no VARCHAR(255),
+    additional_info VARCHAR(255),
+    banner_image VARCHAR(255),
+    banner_image_path VARCHAR(255)
+);
+
+CREATE TABLE admin_user_shop_list (
+    id BIGINT PRIMARY KEY,
+    admin_user_id BIGINT,
+    shop_id BIGINT
+);
+
+CREATE TABLE coupon_shop_list (
+    id BIGINT PRIMARY KEY,
+    coupon_id BIGINT,
+    shop_id BIGINT
+);
+
+-- 3. FOREIGN KEYS
 ALTER TABLE "temp_orders" ADD FOREIGN KEY ("fk_customer_id") REFERENCES "customers" ("customer_id");
 ALTER TABLE "temp_orders" ADD FOREIGN KEY ("fk_status_id") REFERENCES "status_catalogues" ("status_id");
 ALTER TABLE "temp_orders" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("shop_id");
@@ -512,7 +531,13 @@ ALTER TABLE "bin_products" ADD FOREIGN KEY ("fk_shop_id") REFERENCES "shops" ("s
 
 ALTER TABLE "bin_product_images" ADD FOREIGN KEY ("fk_product_id") REFERENCES "bin_products" ("product_id");
 
--- 5. FUNCTIONS & TRIGGERS
+ALTER TABLE admin_user_shop_list ADD CONSTRAINT fk_admin_user FOREIGN KEY (admin_user_id) REFERENCES admin_users(admin_user_id);
+ALTER TABLE admin_user_shop_list ADD CONSTRAINT fk_shop FOREIGN KEY (shop_id) REFERENCES shops(shop_id);
+
+ALTER TABLE coupon_shop_list ADD CONSTRAINT fk_coupon FOREIGN KEY (coupon_id) REFERENCES coupons(coupon_id);
+ALTER TABLE coupon_shop_list ADD CONSTRAINT fk_shop FOREIGN KEY (shop_id) REFERENCES shops(shop_id);
+
+-- 4. FUNCTIONS & TRIGGERS
 CREATE OR REPLACE FUNCTION order_stamp() RETURNS trigger AS $order_stamp$
     begin
         IF (TG_OP = 'INSERT') THEN
@@ -586,14 +611,14 @@ CREATE TRIGGER product_image_stamp
 BEFORE INSERT OR UPDATE OR DELETE ON product_images
     FOR EACH ROW EXECUTE PROCEDURE product_image_stamp();
 
--- 6. VIEWS
+-- 5. VIEWS
 CREATE OR REPLACE VIEW logins AS
 SELECT au.admin_user_id, au.user_name, au.full_name, r.role_id, r.role_name, false AS authentication 
 FROM admin_users au
 LEFT JOIN roles r ON au.fk_role_id = r.role_id;
 
 CREATE OR REPLACE VIEW permissions AS
-SELECT row_number() OVER() AS id, au.admin_user_id, m2.menu_name, mml.full, mml.view, mml.add, mml.update, mml.delete 
+SELECT row_number() OVER() AS id, au.admin_user_id, m2.menu_name, mml.all_of_them, mml.view, mml.add, mml.update, mml.delete 
 FROM admin_users au 
 LEFT JOIN roles r ON au.fk_role_id = r.role_id 
 LEFT JOIN modules m ON r.fk_module_id = m.module_id 
@@ -673,7 +698,7 @@ FROM products p
 WHERE p.quantity <= 5
 ORDER BY p.quantity;
 
--- 7. INSERTS
+-- 6. INSERTS
 INSERT INTO countries (country_id, iso, country_name, nicename, iso3, numcode, phonecode) VALUES
 (1, 'AF', 'AFGHANISTAN', 'Afghanistan', 'AFG', 4, 93),
 (2, 'AL', 'ALBANIA', 'Albania', 'ALB', 8, 355),
